@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Simple HTML5 Canvas Gauge Example</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+  <script src="./gauge.min.js"></script>
+</head>
+<body>
+    <p><b>宜蘭, 員山</b></p>
+    現在氣溫：  <div id="temp" style="display:inline"></div>
+    <br>
+    現在溼度： <div id="humi" style="display:inline"> </div>
+    <div> <canvas id="gauge1" data-type="canv-gauge"></canvas> </div>
+
+
+  <script>
+    var gauge2 = new RadialGauge({
+        renderTo  : 'gauge1',
+        width     : 300,
+        height    : 300,
+        glow      : true,
+        units     : '%',
+        title     : '福壽螺比例',
+        strokeTicks : false,
+        highlights : [{
+            from  : 20,
+            to    : 40,
+            color : 'PaleGreen'
+        }, {
+            from  : 40,
+            to    : 70,
+            color : 'Khaki'
+        }, {
+            from  : 70,
+            to    : 100,
+            color : 'LightSalmon'
+        }],
+        animation : {
+            delay : 10,
+            duration: 300,
+            fn : 'bounce'
+        }
+    });
+
+    gauge2.onready = function() {
+        setInterval( function() {
+            gauge2.setValue( Math.random() * 100);
+        }, 1000);
+    };
+
+    gauge2.draw();
+
+    $.ajax({url: "https://api.thingspeak.com/channels/75140/fields/2.json?results=1",
+        dataType: "json",
+        async: false,
+        success: function(result){
+            console.log(result);
+            console.log(result['feeds'][0]['field2']);
+            $('#temp').html(result['feeds'][0]['field2'])
+            y = -0.026 * result['feeds'][0]['field2'] + 1.0434
+            gauge2.value = 100 - y * 100;
+    }});
+    $.ajax({url: "https://api.thingspeak.com/channels/75140/fields/1.json?results=1",
+        dataType: "json",
+        async: false,
+        success: function(result){
+            $('#humi').html(result['feeds'][0]['field1'])
+    }});
+
+    // animage all gauges on a page
+    window.addEventListener('load', function() {
+        document.gauges.forEach(function(gauge) {
+            setInterval(function() {
+                // gauge.value = Math.random() *
+                //     (gauge.options.maxValue - gauge.options.minValue) +
+                //     gauge.options.minValue;
+
+                $.ajax({url: "https://api.thingspeak.com/channels/75140/fields/2.json?results=1",
+                    dataType: "json",
+                    async: false,
+                    success: function(result){
+                        console.log(result['feeds'][0]['field2']);
+                        $('#temp').html(result['feeds'][0]['field2'])
+                        y = -0.026 * result['feeds'][0]['field2'] + 1.0434
+                        gauge2.value = 100 - y * 100;
+                }});
+                $.ajax({url: "https://api.thingspeak.com/channels/75140/fields/1.json?results=1",
+                    dataType: "json",
+                    async: false,
+                    success: function(result){
+                        $('#humi').html(result['feeds'][0]['field1'])
+                }});
+            }, 10000);
+        });
+    });
+
+  </script>
+</body>
+</html>
